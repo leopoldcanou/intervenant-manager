@@ -1,37 +1,75 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-// Your own logic for dealing with plaintext password strings; be careful!
-import { saltAndHashPassword } from "@/utils/password";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcrypt";
+import { prisma } from "@/lib/prisma";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET must be set");
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    Credentials({
-      // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
+    CredentialsProvider({
+      name: "Credentials",
       credentials: {
-        email: {},
-        password: {},
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
-        let user = null;
+      async authorize(credentials) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email et mot de passe requis");
+          }
 
-        const { email, password } = await signInSchema.parseAsync(credentials);
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email as string,
+            },
+          });
 
-        // logic to salt and hash password
-        const pwHash = saltAndHashPassword(credentials.password);
+          if (!user) {
+            throw new Error("Utilisateur non trouvé");
+          }
 
-        // logic to verify if the user exists
-        user = await getUserFromDb(credentials.email, pwHash);
+          const isValidPassword = await bcrypt.compare(
+            credentials.password as string,
+            user.password as string
+          );
 
-        if (!user) {
-          // No user found, so this is their first attempt to login
-          // Optionally, this is also the place you could do a user registration
-          throw new Error("Invalid credentials.");
+          if (!isValidPassword) {
+            throw new Error("Mot de passe incorrect");
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          };
+        } catch (error) {
+          console.error("Erreur d'authentification:", error);
+          return null;
         }
-
-        // return user object with their profile data
-        return user;
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+  },
+  session: {
+    strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
 });

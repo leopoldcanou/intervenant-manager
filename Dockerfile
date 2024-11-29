@@ -8,6 +8,9 @@ RUN npm install
 COPY ./prisma prisma
 COPY ./src src
 
+# Générer le client Prisma
+RUN npx prisma generate
+
 # Exposer les ports utilisés par Next.js et Prisma Studio
 EXPOSE 3000
 EXPOSE 5555
