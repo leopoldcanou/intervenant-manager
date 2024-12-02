@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { X, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EditIntervenantDialog } from "./edit-intervenant-dialog";
 
 export type Intervenant = {
   id: string;
@@ -117,26 +118,29 @@ export const columns: ColumnDef<Intervenant>[] = [
       const intervenant = row.original;
 
       return (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={async () => {
-            try {
-              await deleteIntervenant(intervenant.id);
-              toast({
-                description: "Intervenant supprimé avec succès",
-              });
-              window.location.reload();
-            } catch (error) {
-              toast({
-                variant: "destructive",
-                description: "Erreur lors de la suppression",
-              });
-            }
-          }}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <EditIntervenantDialog intervenant={intervenant} />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              try {
+                await deleteIntervenant(intervenant.id);
+                toast({
+                  description: "Intervenant supprimé avec succès",
+                });
+                window.location.reload();
+              } catch (error) {
+                toast({
+                  variant: "destructive",
+                  description: "Erreur lors de la suppression",
+                });
+              }
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
   },
