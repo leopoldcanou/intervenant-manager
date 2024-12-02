@@ -1,14 +1,14 @@
-import { prisma } from "@/lib/prisma"
-import NavBar from "@/components/nav-bar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { columns } from "./columns"
-import { DataTable } from "./data-table"
-import { Toaster } from "@/components/ui/toaster"
-import RegenerateAllKeysButton from "./regenerate-all-keys-button"
-import { AddIntervenantDialog } from "./add-intervenant-dialog"
+import { prisma } from "@/lib/prisma";
+import NavBar from "@/components/nav-bar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { columns } from "./columns";
+import { DataTable } from "./data-table";
+import { Toaster } from "@/components/ui/toaster";
+import RegenerateAllKeysButton from "./regenerate-all-keys-button";
+import { AddIntervenantDialog } from "./add-intervenant-dialog";
 
 export default async function IntervenantPage() {
-  const intervenants = await prisma.intervenant.findMany()
+  const intervenants = await prisma.intervenant.findMany();
 
   return (
     <>
@@ -29,5 +29,5 @@ export default async function IntervenantPage() {
         </Card>
       </div>
     </>
-  )
+  );
 }
