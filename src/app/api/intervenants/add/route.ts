@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         lastName,
         email,
         availabilities: "{}",
-        endDate: endDate ? new Date(endDate) : null,
+        endDate: endDate ? new Date(endDate) : new Date(),
         key: Math.random().toString(36).substring(7),
       },
     });
@@ -32,4 +32,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

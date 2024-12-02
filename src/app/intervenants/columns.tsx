@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { X, RefreshCw, Copy, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +49,131 @@ async function regenerateKey(id: string) {
   return response.json();
 }
 
+type CellProps = {
+  row: Row<Intervenant>;
+};
+
+const KeyCell = ({ row }: CellProps) => {
+  const { toast } = useToast();
+  const availabilityUrl = `${
+    window.location.origin
+  }/availability?key=${row.getValue("key")}`;
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(availabilityUrl);
+      toast({
+        description: "Lien copié dans le presse-papier",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        description: "Erreur lors de la copie du lien",
+      });
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="font-mono bg-muted px-2 py-1 rounded inline-block text-sm">
+        {row.getValue("key")}
+      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Copier le lien</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async () => {
+                try {
+                  await regenerateKey(row.original.id);
+                  toast({
+                    description: "Clé régénérée avec succès",
+                  });
+                  window.location.reload();
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    description: "Erreur lors de la régénération de la clé",
+                  });
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Régénérer la clé</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+};
+
+const ActionsCell = ({ row }: CellProps) => {
+  const { toast } = useToast();
+  const intervenant = row.original;
+
+  const handleDelete = async () => {
+    try {
+      await deleteIntervenant(intervenant.id);
+      toast({
+        description: "Intervenant supprimé avec succès",
+      });
+      window.location.reload();
+    } catch {
+      toast({
+        variant: "destructive",
+        description: "Erreur lors de la suppression",
+      });
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <EditIntervenantDialog intervenant={intervenant}>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+          </EditIntervenantDialog>
+          <TooltipContent>
+            <p>Modifier l&apos;intervenant</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={handleDelete}>
+              <X className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Supprimer l&apos;intervenant</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Intervenant>[] = [
   {
     accessorKey: "firstName",
@@ -86,127 +211,10 @@ export const columns: ColumnDef<Intervenant>[] = [
   {
     accessorKey: "key",
     header: "Clé d'accès",
-    cell: ({ row }) => {
-      const { toast } = useToast();
-      const availabilityUrl = `${window.location.origin}/availability?key=${row.getValue("key")}`;
-
-      const copyToClipboard = async () => {
-        try {
-          await navigator.clipboard.writeText(availabilityUrl);
-          toast({
-            description: "Lien copié dans le presse-papier",
-          });
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            description: "Erreur lors de la copie du lien",
-          });
-        }
-      };
-
-      return (
-        <div className="flex items-center gap-2">
-          <div className="font-mono bg-muted px-2 py-1 rounded inline-block text-sm">
-            {row.getValue("key")}
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={copyToClipboard}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copier le lien</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={async () => {
-                    try {
-                      await regenerateKey(row.original.id);
-                      toast({
-                        description: "Clé régénérée avec succès",
-                      });
-                      window.location.reload();
-                    } catch (error) {
-                      toast({
-                        variant: "destructive",
-                        description: "Erreur lors de la régénération de la clé",
-                      });
-                    }
-                  }}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Régénérer la clé</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      );
-    },
+    cell: ({ row }) => <KeyCell row={row} />,
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const { toast } = useToast();
-      const intervenant = row.original;
-
-      return (
-        <div className="flex gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <EditIntervenantDialog intervenant={intervenant} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Modifier l&apos;intervenant</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={async () => {
-                    try {
-                      await deleteIntervenant(intervenant.id);
-                      toast({
-                        description: "Intervenant supprimé avec succès",
-                      });
-                      window.location.reload();
-                    } catch (error) {
-                      toast({
-                        variant: "destructive",
-                        description: "Erreur lors de la suppression",
-                      });
-                    }
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Supprimer l&apos;intervenant</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      );
-    },
+    cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];

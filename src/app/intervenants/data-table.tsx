@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   ColumnDef,
@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -15,12 +15,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
 export function DataTable<TData, TValue>({
@@ -32,7 +32,7 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-  })
+  });
 
   return (
     <div>
@@ -51,7 +51,7 @@ export function DataTable<TData, TValue>({
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -102,5 +102,5 @@ export function DataTable<TData, TValue>({
         </Button>
       </div>
     </div>
-  )
-} 
+  );
+}

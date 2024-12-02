@@ -26,9 +26,10 @@ import { Intervenant } from "./columns";
 
 interface EditIntervenantDialogProps {
   intervenant: Intervenant;
+  children: React.ReactNode;
 }
 
-export function EditIntervenantDialog({ intervenant }: EditIntervenantDialogProps) {
+export function EditIntervenantDialog({ intervenant, children }: EditIntervenantDialogProps) {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState(intervenant.firstName);
   const [lastName, setLastName] = useState(intervenant.lastName);
@@ -71,9 +72,7 @@ export function EditIntervenantDialog({ intervenant }: EditIntervenantDialogProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
-        </Button>
+        {children}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
