@@ -3,21 +3,24 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { name, email } = await request.json();
+    const { firstName, lastName, email, endDate } = await request.json();
 
     // Validation des données
-    if (!name || !email) {
+    if (!firstName || !lastName || !email) {
       return NextResponse.json(
-        { error: "Le nom et l'email sont requis" },
+        { error: "Le prénom, le nom et l'email sont requis" },
         { status: 400 }
       );
     }
 
     const newIntervenant = await prisma.intervenant.create({
       data: {
-        name,
+        firstName,
+        lastName,
         email,
-        availabilities: "{}", // Valeur par défaut
+        availabilities: "{}",
+        endDate: endDate ? new Date(endDate) : null,
+        key: Math.random().toString(36).substring(7),
       },
     });
 

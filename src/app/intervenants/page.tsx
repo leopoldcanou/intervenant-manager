@@ -1,56 +1,31 @@
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { prisma } from "@/lib/prisma";
-import NavBar from "@/components/nav-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma"
+import NavBar from "@/components/nav-bar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { columns } from "./columns"
+import { DataTable } from "./data-table"
+import { Toaster } from "@/components/ui/toaster"
+import { Button } from "@/components/ui/button"
+import { RefreshCw } from "lucide-react"
+import RegenerateAllKeysButton from "./regenerate-all-keys-button"
 
 export default async function IntervenantPage() {
-  const intervenants = await prisma.intervenant.findMany();
+  const intervenants = await prisma.intervenant.findMany()
 
   return (
     <>
       <NavBar />
+      <Toaster />
       <div className="container mx-auto py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Liste des intervenants</CardTitle>
+            <RegenerateAllKeysButton />
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableCaption>Liste des intervenants enregistrés</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Disponibilités</TableHead>
-                  <TableHead>Date de création</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {intervenants.map((intervenant) => (
-                  <TableRow key={intervenant.id}>
-                    <TableCell>{intervenant.name}</TableCell>
-                    <TableCell>{intervenant.email}</TableCell>
-                    <TableCell>
-                      {JSON.stringify(intervenant.availabilities)}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(intervenant.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable columns={columns} data={intervenants} />
           </CardContent>
         </Card>
       </div>
     </>
-  );
+  )
 }
