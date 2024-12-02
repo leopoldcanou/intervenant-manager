@@ -9,7 +9,7 @@ async function getIntervenantByKey(key: string) {
   });
 
   if (!intervenant) {
-    notFound();
+    return null;
   }
 
   const now = new Date();
@@ -21,16 +21,17 @@ async function getIntervenantByKey(key: string) {
 }
 
 export default async function AvailabilityPage({
-  searchParams,
+  params,
 }: {
-  searchParams: { key?: string };
+  params: { key: string };
 }) {
-  if (!searchParams.key) {
-    notFound();
-  }
-
   try {
-    const intervenant = await getIntervenantByKey(searchParams.key);
+    const intervenant = await getIntervenantByKey(params.key);
+    
+    if (!intervenant) {
+      notFound();
+    }
+
     return (
       <div className="container mx-auto py-8">
         <h1 className="text-2xl font-bold">
@@ -39,7 +40,7 @@ export default async function AvailabilityPage({
       </div>
     );
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof Error && error.message === "Clé expirée") {
       return (
         <div className="container mx-auto py-8">
           <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md">
@@ -48,6 +49,6 @@ export default async function AvailabilityPage({
         </div>
       );
     }
-    notFound();
+    throw error;
   }
 } 

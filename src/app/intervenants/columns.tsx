@@ -57,7 +57,7 @@ const KeyCell = ({ row }: CellProps) => {
   const { toast } = useToast();
   const availabilityUrl = `${
     window.location.origin
-  }/availability?key=${row.getValue("key")}`;
+  }/availability/${row.getValue("key")}`;
 
   const copyToClipboard = async () => {
     try {
