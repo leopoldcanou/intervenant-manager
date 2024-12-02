@@ -2,9 +2,15 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw } from "lucide-react";
+import { X, RefreshCw, Copy, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EditIntervenantDialog } from "./edit-intervenant-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type Intervenant = {
   id: string;
@@ -82,31 +88,72 @@ export const columns: ColumnDef<Intervenant>[] = [
     header: "Clé d'accès",
     cell: ({ row }) => {
       const { toast } = useToast();
+      const availabilityUrl = `${window.location.origin}/availability?key=${row.getValue("key")}`;
+
+      const copyToClipboard = async () => {
+        try {
+          await navigator.clipboard.writeText(availabilityUrl);
+          toast({
+            description: "Lien copié dans le presse-papier",
+          });
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            description: "Erreur lors de la copie du lien",
+          });
+        }
+      };
+
       return (
         <div className="flex items-center gap-2">
           <div className="font-mono bg-muted px-2 py-1 rounded inline-block text-sm">
             {row.getValue("key")}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={async () => {
-              try {
-                await regenerateKey(row.original.id);
-                toast({
-                  description: "Clé régénérée avec succès",
-                });
-                window.location.reload();
-              } catch (error) {
-                toast({
-                  variant: "destructive",
-                  description: "Erreur lors de la régénération de la clé",
-                });
-              }
-            }}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={copyToClipboard}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copier le lien</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={async () => {
+                    try {
+                      await regenerateKey(row.original.id);
+                      toast({
+                        description: "Clé régénérée avec succès",
+                      });
+                      window.location.reload();
+                    } catch (error) {
+                      toast({
+                        variant: "destructive",
+                        description: "Erreur lors de la régénération de la clé",
+                      });
+                    }
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Régénérer la clé</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },
@@ -119,27 +166,45 @@ export const columns: ColumnDef<Intervenant>[] = [
 
       return (
         <div className="flex gap-2">
-          <EditIntervenantDialog intervenant={intervenant} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={async () => {
-              try {
-                await deleteIntervenant(intervenant.id);
-                toast({
-                  description: "Intervenant supprimé avec succès",
-                });
-                window.location.reload();
-              } catch (error) {
-                toast({
-                  variant: "destructive",
-                  description: "Erreur lors de la suppression",
-                });
-              }
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <EditIntervenantDialog intervenant={intervenant} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Modifier l&apos;intervenant</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={async () => {
+                    try {
+                      await deleteIntervenant(intervenant.id);
+                      toast({
+                        description: "Intervenant supprimé avec succès",
+                      });
+                      window.location.reload();
+                    } catch (error) {
+                      toast({
+                        variant: "destructive",
+                        description: "Erreur lors de la suppression",
+                      });
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Supprimer l&apos;intervenant</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },
