@@ -58,7 +58,7 @@ export function AddIntervenantDialog() {
     } catch (error) {
       toast({
         variant: "destructive",
-        description: "Erreur lors de l'ajout",
+        description: "Erreur lors de l'ajout de l'intervenant : " + error,
       });
     }
   };
@@ -116,7 +116,9 @@ export function AddIntervenantDialog() {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "P", { locale: fr }) : "Sélectionner une date"}
+                  {endDate
+                    ? format(endDate, "P", { locale: fr })
+                    : "Sélectionner une date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -137,4 +139,4 @@ export function AddIntervenantDialog() {
       </DialogContent>
     </Dialog>
   );
-} 
+}

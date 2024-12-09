@@ -24,7 +24,7 @@ model Intervenant {
   availabilities Json?    @default("{}")
   creationDate   DateTime @default(now())
   endDate        DateTime
-  key            String
+  key            String   @unique
 
   @@map("intervenants")
 }

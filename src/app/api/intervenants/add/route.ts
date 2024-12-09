@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+async function generateUniqueKey(): Promise<string> {
+  while (true) {
+    const key = Math.random().toString(36).substring(7);
+    const existingIntervenant = await prisma.intervenant.findUnique({
+      where: { key },
+    });
+    if (!existingIntervenant) {
+      return key;
+    }
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { firstName, lastName, email, endDate } = await request.json();
@@ -13,14 +25,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const uniqueKey = await generateUniqueKey();
+
     const newIntervenant = await prisma.intervenant.create({
       data: {
         firstName,
         lastName,
         email,
         availabilities: "{}",
+        creationDate: new Date(),
         endDate: endDate ? new Date(endDate) : new Date(),
-        key: Math.random().toString(36).substring(7),
+        key: uniqueKey,
       },
     });
 

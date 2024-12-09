@@ -11,6 +11,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 export type Intervenant = {
   id: string;
@@ -106,7 +116,8 @@ const KeyCell = ({ row }: CellProps) => {
                 } catch (error) {
                   toast({
                     variant: "destructive",
-                    description: "Erreur lors de la régénération de la clé",
+                    description:
+                      "Erreur lors de la régénération de la clé : " + error,
                   });
                 }
               }}
@@ -126,6 +137,7 @@ const KeyCell = ({ row }: CellProps) => {
 const ActionsCell = ({ row }: CellProps) => {
   const { toast } = useToast();
   const intervenant = row.original;
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -133,6 +145,7 @@ const ActionsCell = ({ row }: CellProps) => {
       toast({
         description: "Intervenant supprimé avec succès",
       });
+      setIsDeleteDialogOpen(false);
       window.location.reload();
     } catch {
       toast({
@@ -158,18 +171,42 @@ const ActionsCell = ({ row }: CellProps) => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={handleDelete}>
-              <X className="h-4 w-4" />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Supprimer l&apos;intervenant</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer l&apos;intervenant{" "}
+              {intervenant.firstName} {intervenant.lastName} ? Cette action est
+              irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Annuler
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Supprimer l&apos;intervenant</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            <Button variant="destructive" onClick={handleDelete}>
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
