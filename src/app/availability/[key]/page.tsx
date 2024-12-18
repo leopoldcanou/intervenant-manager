@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { AvailabilityClient } from "./client";
 
 async function getIntervenantByKey(key: string) {
   const intervenant = await prisma.intervenant.findFirst({
@@ -27,16 +28,17 @@ export default async function AvailabilityPage({
 }) {
   try {
     const intervenant = await getIntervenantByKey(params.key);
-    
+
     if (!intervenant) {
       notFound();
     }
 
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold mb-8">
           Bonjour {intervenant.firstName} {intervenant.lastName}
         </h1>
+        <AvailabilityClient intervenantKey={params.key} />
       </div>
     );
   } catch (error) {
@@ -51,4 +53,4 @@ export default async function AvailabilityPage({
     }
     throw error;
   }
-} 
+}
