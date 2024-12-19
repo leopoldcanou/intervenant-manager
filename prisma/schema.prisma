@@ -22,6 +22,7 @@ model Intervenant {
   lastName         String
   email            String    @unique
   availabilities   Json?     @default("{}")
+  workweek         Json?     @default("[]")
   creationDate     DateTime  @default(now())
   endDate          DateTime
   key              String    @unique

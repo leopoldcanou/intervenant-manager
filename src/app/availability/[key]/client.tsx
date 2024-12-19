@@ -20,6 +20,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { getWeekStatuses } from "@/lib/workweek";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 function convertAvailabilityToEvents(
   availabilities: Availabilities,
@@ -135,6 +138,7 @@ export function AvailabilityClient({
         throw new Error("Erreur lors de la récupération des données");
       }
       const data = await response.json();
+      console.log("Données reçues:", data);
       setIntervenant(data);
       setAvailabilities(data.availabilities);
     } catch (error) {
@@ -338,6 +342,12 @@ export function AvailabilityClient({
     getWeekNumber(monthViewDate)
   );
 
+  const weekStatuses = intervenant?.workweek 
+    ? getWeekStatuses(intervenant.workweek as any, availabilities)
+    : [];
+
+  const currentWeekStatus = weekStatuses.find(s => s.week === currentWeek);
+
   return (
     <>
       <div className="container mx-auto py-8">
@@ -451,6 +461,64 @@ export function AvailabilityClient({
                   eventResize={handleEventResize}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Alertes pour la semaine courante */}
+          {currentWeekStatus && (
+            <div className="space-y-4">
+              {currentWeekStatus.status === 'missing' && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Disponibilités manquantes</AlertTitle>
+                  <AlertDescription>
+                    Vous devez saisir {currentWeekStatus.hours}h de disponibilités pour la semaine {currentWeekStatus.week}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {currentWeekStatus.status === 'insufficient' && (
+                <Alert variant="warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Disponibilités insuffisantes</AlertTitle>
+                  <AlertDescription>
+                    Il vous manque encore {currentWeekStatus.remainingHours}h de disponibilités à saisir pour la semaine {currentWeekStatus.week}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {currentWeekStatus.status === 'ok' && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertTitle>Disponibilités suffisantes</AlertTitle>
+                  <AlertDescription>
+                    Vous avez saisi toutes vos heures pour la semaine {currentWeekStatus.week} ({currentWeekStatus.hours}h)
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
+          {/* Liste des semaines avec statut */}
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4">État des disponibilités</h2>
+            <div className="space-y-2">
+              {weekStatuses.map(status => (
+                <div key={status.week} className="flex items-center justify-between">
+                  <span>Semaine {status.week}</span>
+                  <div className="flex items-center gap-4">
+                    <span>
+                      {status.availableHours}h / {status.hours}h
+                      {status.remainingHours > 0 && (
+                        <span className="text-red-500 ml-2">
+                          (encore {status.remainingHours}h à ajouter)
+                        </span>
+                      )}
+                    </span>
+                    {status.status === 'ok' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {status.status === 'insufficient' && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
+                    {status.status === 'missing' && <XCircle className="h-4 w-4 text-red-500" />}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

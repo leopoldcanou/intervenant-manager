@@ -15,6 +15,7 @@ export async function GET(
         lastName: true,
         availabilities: true,
         lastModifiedDate: true,
+        workweek: true,
       },
     });
 
