@@ -4,9 +4,11 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  const protectedPaths = ["/intervenants"];
+  const protectedPaths = ["/admin/intervenants"];
 
-  if (protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))) {
+  if (
+    protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+  ) {
     try {
       const token = await getToken({
         req: request,
@@ -26,5 +28,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/intervenants/:path*"],
+  matcher: ["/admin/intervenants/:path*"],
 };

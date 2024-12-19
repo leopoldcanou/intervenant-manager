@@ -26,7 +26,7 @@ export default function Login() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/intervenants");
+      router.push("/admin/intervenants");
       router.refresh();
     }
   }, [status, router]);
@@ -46,7 +46,7 @@ export default function Login() {
       if (result?.error) {
         setError("Email ou mot de passe incorrect");
       } else if (result?.ok) {
-        router.push("/intervenants");
+        router.push("/admin/intervenants");
         router.refresh();
       }
     } catch (error) {

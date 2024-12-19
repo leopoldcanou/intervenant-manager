@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export async function handleSignIn(formData: FormData) {
   await signIn("credentials", {
-    ...Object.fromEntries(formData)
+    ...Object.fromEntries(formData),
   });
-  redirect("/");
-} 
+  redirect("/admin/intervenants");
+}
