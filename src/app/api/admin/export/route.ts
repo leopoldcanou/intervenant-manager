@@ -8,36 +8,41 @@ export async function GET() {
         firstName: true,
         lastName: true,
         availabilities: true,
+        lastModifiedDate: true,
       },
     });
 
-    const formattedData = intervenants
-      .map(intervenant => {
-        if (!intervenant.availabilities) {
-          return null;
-        }
-
-        let timeConstraints;
-        try {
-          if (typeof intervenant.availabilities === 'string') {
-            timeConstraints = JSON.parse(intervenant.availabilities);
-          } else {
-            timeConstraints = intervenant.availabilities;
-          }
-
-          if (!timeConstraints || Object.keys(timeConstraints).length === 0) {
+    const formattedData = {
+      export_date: new Date().toISOString(),
+      intervenants: intervenants
+        .map(intervenant => {
+          if (!intervenant.availabilities) {
             return null;
           }
 
-          return {
-            name: `${intervenant.firstName} ${intervenant.lastName}`,
-            timeConstraints
-          };
-        } catch (error) {
-          return null;
-        }
-      })
-      .filter(item => item !== null);
+          let timeConstraints;
+          try {
+            if (typeof intervenant.availabilities === 'string') {
+              timeConstraints = JSON.parse(intervenant.availabilities);
+            } else {
+              timeConstraints = intervenant.availabilities;
+            }
+
+            if (!timeConstraints || Object.keys(timeConstraints).length === 0) {
+              return null;
+            }
+
+            return {
+              name: `${intervenant.firstName} ${intervenant.lastName}`,
+              timeConstraints,
+              last_modified: intervenant.lastModifiedDate?.toISOString() || null,
+            };
+          } catch (error) {
+            return null;
+          }
+        })
+        .filter(item => item !== null),
+    };
 
     return NextResponse.json(formattedData);
   } catch (error) {

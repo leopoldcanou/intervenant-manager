@@ -17,14 +17,15 @@ model User {
 }
 
 model Intervenant {
-  id             String   @id @default(cuid())
-  firstName      String
-  lastName       String
-  email          String   @unique
-  availabilities Json?    @default("{}")
-  creationDate   DateTime @default(now())
-  endDate        DateTime
-  key            String   @unique
+  id               String    @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String    @unique
+  availabilities   Json?     @default("{}")
+  creationDate     DateTime  @default(now())
+  endDate          DateTime
+  key              String    @unique
+  lastModifiedDate DateTime?
 
   @@map("intervenants")
 }

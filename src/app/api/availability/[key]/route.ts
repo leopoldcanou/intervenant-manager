@@ -44,13 +44,8 @@ export async function POST(
       return new NextResponse("Intervenant non trouvé", { status: 404 });
     }
 
-    let currentAvailabilities = {};
-    try {
-      currentAvailabilities = JSON.parse(intervenant.availabilities as string || '{}');
-    } catch (error) {
-      console.error("Erreur parsing availabilities:", error);
-      currentAvailabilities = {};
-    }
+    // Convertir les disponibilités existantes en objet
+    let currentAvailabilities = intervenant.availabilities as any || {};
     
     // Récupérer les créneaux existants pour cette semaine
     const existingSlots = currentAvailabilities[weekKey] || [];
@@ -64,12 +59,18 @@ export async function POST(
     const updatedIntervenant = await prisma.intervenant.update({
       where: { key: params.key },
       data: {
-        availabilities: JSON.stringify(updatedAvailabilities),
+        availabilities: updatedAvailabilities, // Prisma gérera la conversion en JSON
+        lastModifiedDate: new Date(),
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        availabilities: true,
+        lastModifiedDate: true,
       },
     });
 
-    console.log("Disponibilités mises à jour:", updatedIntervenant.availabilities);
-    return NextResponse.json({ success: true });
+    return NextResponse.json(updatedIntervenant);
   } catch (error) {
     console.error("Erreur:", error);
     return new NextResponse("Erreur serveur", { status: 500 });
@@ -82,23 +83,17 @@ export async function PUT(
 ) {
   try {
     const { availabilities } = await request.json();
-    console.log("Sauvegarde des disponibilités:", {
-      key: params.key,
-      availabilities: JSON.stringify(availabilities, null, 2)
-    });
 
     const updatedIntervenant = await prisma.intervenant.update({
       where: { key: params.key },
       data: {
-        availabilities: JSON.stringify(availabilities),
+        availabilities, // Prisma gérera la conversion en JSON
+        lastModifiedDate: new Date(),
       },
     });
 
-    console.log("Intervenant mis à jour:", updatedIntervenant);
-
     return NextResponse.json(updatedIntervenant);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour des disponibilités" },
       { status: 500 }
