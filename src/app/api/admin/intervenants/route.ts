@@ -3,19 +3,21 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { name, email, availabilities } = await request.json();
+    const { firstName, lastName, email, availabilities } = await request.json();
 
     const newIntervenant = await prisma.intervenant.create({
       data: {
-        name,
+        firstName,
+        lastName,
         email,
         availabilities: availabilities || "{}",
+        endDate: new Date(),
+        key: Math.random().toString(36).substring(7),
       },
     });
 
     return NextResponse.json(newIntervenant, { status: 201 });
   } catch (error) {
-    console.error(error);
     return NextResponse.json(
       { error: "Erreur lors de la création de l'intervenant" },
       { status: 500 }

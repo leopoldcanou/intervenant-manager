@@ -65,9 +65,16 @@ function convertAvailabilityToEvents(
       days.forEach((day: string) => {
         const englishDay = translateDayToEnglish(day.trim());
         if (englishDay) {
-          const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-            .indexOf(englishDay);
-          
+          const dayIndex = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ].indexOf(englishDay);
+
           events.push({
             title: "Disponible",
             startTime: slot.from,
@@ -78,8 +85,8 @@ function convertAvailabilityToEvents(
               isSpecific: false,
               days: day.trim(),
               startTime: slot.from,
-              endTime: slot.to
-            }
+              endTime: slot.to,
+            },
           });
         }
       });
@@ -93,9 +100,16 @@ function convertAvailabilityToEvents(
       days.forEach((day: string) => {
         const englishDay = translateDayToEnglish(day.trim());
         if (englishDay) {
-          const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-            .indexOf(englishDay);
-          
+          const dayIndex = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ].indexOf(englishDay);
+
           events.push({
             title: "Disponible",
             startTime: slot.from,
@@ -106,8 +120,8 @@ function convertAvailabilityToEvents(
               isSpecific: true,
               days: day.trim(),
               startTime: slot.from,
-              endTime: slot.to
-            }
+              endTime: slot.to,
+            },
           });
         }
       });
@@ -122,7 +136,9 @@ export function AvailabilityClient({
 }: {
   intervenantKey: string;
 }) {
-  const [availabilities, setAvailabilities] = useState<Availabilities | null>(null);
+  const [availabilities, setAvailabilities] = useState<Availabilities | null>(
+    null
+  );
   const [intervenant, setIntervenant] = useState<any>(null);
   const [currentWeek, setCurrentWeek] = useState(getWeekNumber(new Date()));
   const [monthViewDate, setMonthViewDate] = useState(new Date());
@@ -202,9 +218,9 @@ export function AvailabilityClient({
     if (!eventToDelete) return;
 
     try {
-      const endpoint = eventToDelete.isDefaultEvent ? 
-        `/api/availability/${intervenantKey}/delete-default` : 
-        `/api/availability/${intervenantKey}/delete`;
+      const endpoint = eventToDelete.isDefaultEvent
+        ? `/api/availability/${intervenantKey}/delete-default`
+        : `/api/availability/${intervenantKey}/delete`;
 
       const timeSlot = {
         days: eventToDelete._def.extendedProps.days,
@@ -212,7 +228,7 @@ export function AvailabilityClient({
         to: eventToDelete._def.extendedProps.endTime,
       };
 
-      console.log('TimeSlot to delete:', timeSlot);
+      console.log("TimeSlot to delete:", timeSlot);
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -238,8 +254,8 @@ export function AvailabilityClient({
 
   const handleEventDrop = async (dropInfo: any) => {
     const event = dropInfo.event;
-    const dayName = new Date(event.start).toLocaleDateString("fr-FR", { 
-      weekday: "long" 
+    const dayName = new Date(event.start).toLocaleDateString("fr-FR", {
+      weekday: "long",
     });
 
     try {
@@ -252,13 +268,13 @@ export function AvailabilityClient({
           weekNumber: currentWeek,
           oldTimeSlot: {
             days: dayName,
-            from: dropInfo.oldEvent.startStr.split('T')[1].slice(0, 5),
-            to: dropInfo.oldEvent.endStr.split('T')[1].slice(0, 5),
+            from: dropInfo.oldEvent.startStr.split("T")[1].slice(0, 5),
+            to: dropInfo.oldEvent.endStr.split("T")[1].slice(0, 5),
           },
           newTimeSlot: {
             days: dayName,
-            from: event.startStr.split('T')[1].slice(0, 5),
-            to: event.endStr.split('T')[1].slice(0, 5),
+            from: event.startStr.split("T")[1].slice(0, 5),
+            to: event.endStr.split("T")[1].slice(0, 5),
           },
         }),
       });
@@ -274,8 +290,8 @@ export function AvailabilityClient({
 
   const handleEventResize = async (resizeInfo: any) => {
     const event = resizeInfo.event;
-    const dayName = new Date(event.start).toLocaleDateString("fr-FR", { 
-      weekday: "long" 
+    const dayName = new Date(event.start).toLocaleDateString("fr-FR", {
+      weekday: "long",
     });
 
     try {
@@ -288,13 +304,13 @@ export function AvailabilityClient({
           weekNumber: currentWeek,
           oldTimeSlot: {
             days: dayName,
-            from: resizeInfo.oldEvent.startStr.split('T')[1].slice(0, 5),
-            to: resizeInfo.oldEvent.endStr.split('T')[1].slice(0, 5),
+            from: resizeInfo.oldEvent.startStr.split("T")[1].slice(0, 5),
+            to: resizeInfo.oldEvent.endStr.split("T")[1].slice(0, 5),
           },
           newTimeSlot: {
             days: dayName,
-            from: event.startStr.split('T')[1].slice(0, 5),
-            to: event.endStr.split('T')[1].slice(0, 5),
+            from: event.startStr.split("T")[1].slice(0, 5),
+            to: event.endStr.split("T")[1].slice(0, 5),
           },
         }),
       });
@@ -310,19 +326,27 @@ export function AvailabilityClient({
 
   const handleSetAsDefaultConfirm = async () => {
     try {
-      const response = await fetch(`/api/availability/${intervenantKey}/set-default`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          weekNumber: currentWeek,
-        }),
-      });
+      const response = await fetch(
+        `/api/availability/${intervenantKey}/set-default`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            weekNumber: currentWeek,
+          }),
+        }
+      );
 
-      if (!response.ok) throw new Error("Erreur lors de la définition des disponibilités par défaut");
+      if (!response.ok)
+        throw new Error(
+          "Erreur lors de la définition des disponibilités par défaut"
+        );
 
-      const updatedData = await fetch(`/api/availability/${intervenantKey}`).then(r => r.json());
+      const updatedData = await fetch(
+        `/api/availability/${intervenantKey}`
+      ).then((r) => r.json());
       setAvailabilities(updatedData.availabilities);
     } catch (error) {
       console.error("Erreur:", error);
@@ -345,11 +369,11 @@ export function AvailabilityClient({
     getWeekNumber(monthViewDate)
   );
 
-  const weekStatuses = intervenant?.workweek 
+  const weekStatuses = intervenant?.workweek
     ? getWeekStatuses(intervenant.workweek as any, availabilities)
     : [];
 
-  const currentWeekStatus = weekStatuses.find(s => s.week === currentWeek);
+  const currentWeekStatus = weekStatuses.find((s) => s.week === currentWeek);
 
   return (
     <>
@@ -362,13 +386,16 @@ export function AvailabilityClient({
             {intervenant.lastModifiedDate && (
               <p className="text-sm text-muted-foreground">
                 Dernière modification le{" "}
-                {new Date(intervenant.lastModifiedDate).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {new Date(intervenant.lastModifiedDate).toLocaleDateString(
+                  "fr-FR",
+                  {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )}
               </p>
             )}
           </div>
@@ -407,7 +434,7 @@ export function AvailabilityClient({
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <Button 
+                <Button
                   onClick={() => setIsSetDefaultDialogOpen(true)}
                   className="mb-4"
                 >
@@ -448,13 +475,6 @@ export function AvailabilityClient({
                     html: `
                       <div class="flex items-center justify-between p-1">
                         <span>${eventInfo.timeText}</span>
-                        <button class="delete-event text-gray-500 hover:text-red-500 p-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                          </svg>
-                        </button>
                       </div>
                     `,
                   })}
@@ -470,30 +490,34 @@ export function AvailabilityClient({
           {/* Alertes pour la semaine courante */}
           {currentWeekStatus && (
             <div className="space-y-4">
-              {currentWeekStatus.status === 'missing' && (
+              {currentWeekStatus.status === "missing" && (
                 <Alert variant="destructive">
                   <XCircle className="h-4 w-4" />
                   <AlertTitle>Disponibilités manquantes</AlertTitle>
                   <AlertDescription>
-                    Vous devez saisir {currentWeekStatus.hours}h de disponibilités pour la semaine {currentWeekStatus.week}
+                    Vous devez saisir {currentWeekStatus.hours}h de
+                    disponibilités pour la semaine {currentWeekStatus.week}
                   </AlertDescription>
                 </Alert>
               )}
-              {currentWeekStatus.status === 'insufficient' && (
-                <Alert variant="warning">
+              {currentWeekStatus.status === "insufficient" && (
+                <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>Disponibilités insuffisantes</AlertTitle>
                   <AlertDescription>
-                    Il vous manque encore {currentWeekStatus.remainingHours}h de disponibilités à saisir pour la semaine {currentWeekStatus.week}
+                    Il vous manque encore {currentWeekStatus.remainingHours}h de
+                    disponibilités à saisir pour la semaine{" "}
+                    {currentWeekStatus.week}
                   </AlertDescription>
                 </Alert>
               )}
-              {currentWeekStatus.status === 'ok' && (
+              {currentWeekStatus.status === "ok" && (
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertTitle>Disponibilités suffisantes</AlertTitle>
                   <AlertDescription>
-                    Vous avez saisi toutes vos heures pour la semaine {currentWeekStatus.week} ({currentWeekStatus.hours}h)
+                    Vous avez saisi toutes vos heures pour la semaine{" "}
+                    {currentWeekStatus.week} ({currentWeekStatus.hours}h)
                   </AlertDescription>
                 </Alert>
               )}
@@ -502,10 +526,15 @@ export function AvailabilityClient({
 
           {/* Liste des semaines avec statut */}
           <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4">État des disponibilités</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              État des disponibilités
+            </h2>
             <div className="space-y-2">
-              {weekStatuses.map(status => (
-                <div key={status.week} className="flex items-center justify-between">
+              {weekStatuses.map((status) => (
+                <div
+                  key={status.week}
+                  className="flex items-center justify-between"
+                >
                   <span>Semaine {status.week}</span>
                   <div className="flex items-center gap-4">
                     <span>
@@ -516,9 +545,15 @@ export function AvailabilityClient({
                         </span>
                       )}
                     </span>
-                    {status.status === 'ok' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                    {status.status === 'insufficient' && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
-                    {status.status === 'missing' && <XCircle className="h-4 w-4 text-red-500" />}
+                    {status.status === "ok" && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                    {status.status === "insufficient" && (
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    )}
+                    {status.status === "missing" && (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
                   </div>
                 </div>
               ))}
@@ -527,7 +562,10 @@ export function AvailabilityClient({
         </div>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -538,7 +576,7 @@ export function AvailabilityClient({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive hover:bg-destructive/90"
             >
@@ -548,13 +586,17 @@ export function AvailabilityClient({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={isSetDefaultDialogOpen} onOpenChange={setIsSetDefaultDialogOpen}>
+      <AlertDialog
+        open={isSetDefaultDialogOpen}
+        onOpenChange={setIsSetDefaultDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la modification</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous définir les disponibilités de cette semaine comme disponibilités par défaut ?
-              Cela remplacera les disponibilités par défaut existantes.
+              Voulez-vous définir les disponibilités de cette semaine comme
+              disponibilités par défaut ? Cela remplacera les disponibilités par
+              défaut existantes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

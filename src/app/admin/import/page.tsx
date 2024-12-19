@@ -20,7 +20,9 @@ export default function ImportPage() {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -60,7 +62,9 @@ export default function ImportPage() {
       });
     } catch (error) {
       console.error("Erreur:", error);
-      setError(error instanceof Error ? error.message : "Erreur lors de l'import");
+      setError(
+        error instanceof Error ? error.message : "Erreur lors de l'import"
+      );
       toast({
         variant: "destructive",
         description: "Erreur lors de l'import",
@@ -76,8 +80,8 @@ export default function ImportPage() {
       <NavBar />
       <div className="container mx-auto py-8">
         <div className="flex flex-col items-center gap-8">
-          <h1 className="text-2xl font-bold">Import des workweeks</h1>
-          
+          <h1 className="text-2xl font-bold">Import de quantités d'heures</h1>
+
           <div className="w-full max-w-md space-y-4">
             <div className="flex justify-center">
               <Button
@@ -109,4 +113,4 @@ export default function ImportPage() {
       </div>
     </>
   );
-} 
+}
