@@ -9,6 +9,17 @@ import { useEffect, useState } from "react";
 import { Availabilities, TimeSlot } from "@/types/availability";
 import { getWeekNumber } from "@/lib/date";
 import interactionPlugin from "@fullcalendar/interaction";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function convertAvailabilityToEvents(
   availabilities: Availabilities,
@@ -101,6 +112,8 @@ export function AvailabilityClient({
   const [currentWeek, setCurrentWeek] = useState(getWeekNumber(new Date()));
   const [monthViewDate, setMonthViewDate] = useState(new Date());
   const [weekViewDate, setWeekViewDate] = useState(new Date());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<any>(null);
 
   useEffect(() => {
     async function fetchAvailabilities() {
@@ -161,6 +174,46 @@ export function AvailabilityClient({
     }
   };
 
+  const handleEventClick = async (clickInfo: any) => {
+    setEventToDelete(clickInfo.event);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!eventToDelete) return;
+
+    const dayName = new Date(eventToDelete.start).toLocaleDateString("fr-FR", { 
+      weekday: "long" 
+    });
+    
+    try {
+      const response = await fetch(`/api/availability/${intervenantKey}/delete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weekNumber: currentWeek,
+          timeSlot: {
+            days: dayName,
+            from: eventToDelete.startStr.split('T')[1].slice(0, 5),
+            to: eventToDelete.endStr.split('T')[1].slice(0, 5),
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de la suppression");
+
+      const updatedData = await fetch(`/api/availability/${intervenantKey}`).then(r => r.json());
+      setAvailabilities(updatedData.availabilities);
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setEventToDelete(null);
+    }
+  };
+
   if (!availabilities) {
     return (
       <div className="container mx-auto py-8">
@@ -176,71 +229,109 @@ export function AvailabilityClient({
   );
 
   return (
-    <div className="grid grid-cols-[400px_1fr] gap-4">
-      <div className="bg-white p-4 rounded-lg shadow">
-        <FullCalendar
-          plugins={[dayGridPlugin]}
-          initialView="dayGridMonth"
-          locale={frLocale}
-          headerToolbar={{
-            left: "prev,next",
-            center: "title",
-            right: "",
-          }}
-          height="auto"
-          selectable={true}
-          select={(info) => {
-            setWeekViewDate(info.start);
-            setCurrentWeek(getWeekNumber(info.start));
-          }}
-          events={monthEvents}
-          displayEventTime={false}
-          initialDate={monthViewDate}
-          datesSet={(dateInfo) => {
-            setMonthViewDate(dateInfo.start);
-          }}
-          dayCellClassNames={(arg) => {
-            // Vérifie si le jour a des événements
-            const hasEvents = monthEvents.some((event) => {
-              const dayIndex = event.daysOfWeek?.[0];
-              return dayIndex === arg.date.getDay();
-            });
-            return hasEvents ? "bg-yellow-100" : "";
-          }}
-        />
+    <>
+      <div className="grid grid-cols-[400px_1fr] gap-4">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <FullCalendar
+            plugins={[dayGridPlugin]}
+            initialView="dayGridMonth"
+            locale={frLocale}
+            headerToolbar={{
+              left: "prev,next",
+              center: "title",
+              right: "",
+            }}
+            height="auto"
+            selectable={true}
+            select={(info) => {
+              setWeekViewDate(info.start);
+              setCurrentWeek(getWeekNumber(info.start));
+            }}
+            events={monthEvents}
+            displayEventTime={false}
+            initialDate={monthViewDate}
+            datesSet={(dateInfo) => {
+              setMonthViewDate(dateInfo.start);
+            }}
+            dayCellClassNames={(arg) => {
+              // Vérifie si le jour a des événements
+              const hasEvents = monthEvents.some((event) => {
+                const dayIndex = event.daysOfWeek?.[0];
+                return dayIndex === arg.date.getDay();
+              });
+              return hasEvents ? "bg-yellow-100" : "";
+            }}
+          />
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow">
+          <FullCalendar
+            plugins={[timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            locale={frLocale}
+            slotMinTime="07:00:00"
+            slotMaxTime="20:00:00"
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "",
+            }}
+            weekNumbers={true}
+            events={weekEvents}
+            allDaySlot={false}
+            height="auto"
+            selectable={true}
+            selectMirror={true}
+            selectMinDistance={1}
+            selectConstraint={{
+              startTime: "07:00:00",
+              endTime: "20:00:00",
+            }}
+            select={handleSelect}
+            datesSet={(dateInfo) => {
+              setWeekViewDate(dateInfo.start);
+              setCurrentWeek(getWeekNumber(dateInfo.start));
+            }}
+            initialDate={weekViewDate}
+            eventContent={(eventInfo) => ({
+              html: `
+                <div class="flex items-center justify-between p-1">
+                  <span>${eventInfo.timeText}</span>
+                  <button class="delete-event text-gray-500 hover:text-red-500 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              `,
+            })}
+            eventClick={handleEventClick}
+          />
+        </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow">
-        <FullCalendar
-          plugins={[timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          locale={frLocale}
-          slotMinTime="07:00:00"
-          slotMaxTime="20:00:00"
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "",
-          }}
-          weekNumbers={true}
-          events={weekEvents}
-          allDaySlot={false}
-          height="auto"
-          selectable={true}
-          selectMirror={true}
-          selectMinDistance={1}
-          selectConstraint={{
-            startTime: "07:00:00",
-            endTime: "20:00:00",
-          }}
-          select={handleSelect}
-          datesSet={(dateInfo) => {
-            setWeekViewDate(dateInfo.start);
-            setCurrentWeek(getWeekNumber(dateInfo.start));
-          }}
-          initialDate={weekViewDate}
-        />
-      </div>
-    </div>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce créneau de disponibilité ?
+              Cette action ne peut pas être annulée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
