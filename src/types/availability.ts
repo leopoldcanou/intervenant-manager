@@ -6,5 +6,5 @@ export interface TimeSlot {
 
 export interface Availabilities {
   default?: TimeSlot[];
-  [key: `S${number}`]: TimeSlot[];
+  [key: string]: TimeSlot[] | undefined;
 } 

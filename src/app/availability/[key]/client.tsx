@@ -3,6 +3,7 @@
 import React from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import dayGridPlugin from "@fullcalendar/daygrid";
 import frLocale from "@fullcalendar/core/locales/fr";
 import { useEffect, useState } from "react";
 import { Availabilities, TimeSlot } from "@/types/availability";
@@ -10,8 +11,7 @@ import { getWeekNumber } from "@/lib/date";
 
 function convertAvailabilityToEvents(
   availabilities: Availabilities,
-  weekNumber?: number,
-  selectedDate?: Date
+  weekNumber?: number
 ) {
   const events: {
     title: string;
@@ -22,10 +22,9 @@ function convertAvailabilityToEvents(
     daysOfWeek?: number[];
     backgroundColor: string;
   }[] = [];
-  
-  const year = selectedDate ? selectedDate.getFullYear() : new Date().getFullYear();
+
   const weekKey = `S${weekNumber}`;
-  
+
   const translateDayToEnglish = (day: string) => {
     const translations: { [key: string]: string } = {
       lundi: "Monday",
@@ -38,9 +37,10 @@ function convertAvailabilityToEvents(
   };
 
   // Utiliser les disponibilités spécifiques de la semaine si elles existent
-  const weekAvailabilities = weekNumber && availabilities[weekKey] 
-    ? availabilities[weekKey] 
-    : availabilities.default;
+  const weekAvailabilities =
+    weekNumber && availabilities[weekKey]
+      ? availabilities[weekKey]
+      : availabilities.default;
 
   if (!weekAvailabilities) {
     return events;
@@ -51,9 +51,16 @@ function convertAvailabilityToEvents(
     days.forEach((day: string) => {
       const englishDay = translateDayToEnglish(day.trim());
       if (englishDay) {
-        const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-          .indexOf(englishDay);
-        
+        const dayIndex = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ].indexOf(englishDay);
+
         events.push({
           title: "Disponible",
           startTime: slot.from,
@@ -68,10 +75,17 @@ function convertAvailabilityToEvents(
   return events;
 }
 
-export function AvailabilityClient({ intervenantKey }: { intervenantKey: string }) {
-  const [availabilities, setAvailabilities] = useState<Availabilities | null>(null);
+export function AvailabilityClient({
+  intervenantKey,
+}: {
+  intervenantKey: string;
+}) {
+  const [availabilities, setAvailabilities] = useState<Availabilities | null>(
+    null
+  );
   const [currentWeek, setCurrentWeek] = useState(getWeekNumber(new Date()));
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [monthViewDate, setMonthViewDate] = useState(new Date());
+  const [weekViewDate, setWeekViewDate] = useState(new Date());
 
   useEffect(() => {
     async function fetchAvailabilities() {
@@ -98,34 +112,70 @@ export function AvailabilityClient({ intervenantKey }: { intervenantKey: string 
     );
   }
 
-  const events = convertAvailabilityToEvents(
+  const weekEvents = convertAvailabilityToEvents(availabilities, currentWeek);
+  const monthEvents = convertAvailabilityToEvents(
     availabilities,
-    currentWeek,
-    selectedDate
+    getWeekNumber(monthViewDate)
   );
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <FullCalendar
-        plugins={[timeGridPlugin]}
-        initialView="timeGridWeek"
-        locale={frLocale}
-        slotMinTime="07:00:00"
-        slotMaxTime="20:00:00"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridWeek",
-        }}
-        events={events}
-        allDaySlot={false}
-        height="auto"
-        datesSet={(dateInfo) => {
-          const newWeek = getWeekNumber(dateInfo.start);
-          setCurrentWeek(newWeek);
-          setSelectedDate(dateInfo.start);
-        }}
-      />
+    <div className="grid grid-cols-[400px_1fr] gap-4">
+      <div className="bg-white p-4 rounded-lg shadow">
+        <FullCalendar
+          plugins={[dayGridPlugin]}
+          initialView="dayGridMonth"
+          locale={frLocale}
+          headerToolbar={{
+            left: "prev,next",
+            center: "title",
+            right: "",
+          }}
+          height="auto"
+          selectable={true}
+          select={(info) => {
+            setWeekViewDate(info.start);
+            setCurrentWeek(getWeekNumber(info.start));
+          }}
+          events={monthEvents}
+          displayEventTime={false}
+          initialDate={monthViewDate}
+          datesSet={(dateInfo) => {
+            setMonthViewDate(dateInfo.start);
+          }}
+          dayCellClassNames={(arg) => {
+            // Vérifie si le jour a des événements
+            const hasEvents = monthEvents.some((event) => {
+              const dayIndex = event.daysOfWeek?.[0];
+              return dayIndex === arg.date.getDay();
+            });
+            return hasEvents ? "bg-yellow-100" : "";
+          }}
+        />
+      </div>
+
+      <div className="bg-white p-4 rounded-lg shadow">
+        <FullCalendar
+          plugins={[timeGridPlugin]}
+          initialView="timeGridWeek"
+          locale={frLocale}
+          slotMinTime="07:00:00"
+          slotMaxTime="20:00:00"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "",
+          }}
+          weekNumbers={true}
+          events={weekEvents}
+          allDaySlot={false}
+          height="auto"
+          datesSet={(dateInfo) => {
+            setWeekViewDate(dateInfo.start);
+            setCurrentWeek(getWeekNumber(dateInfo.start));
+          }}
+          initialDate={weekViewDate}
+        />
+      </div>
     </div>
   );
 }
