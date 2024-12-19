@@ -6,7 +6,7 @@ export async function POST(
   { params }: { params: { key: string } }
 ) {
   try {
-    const { weekNumber, timeSlot } = await request.json();
+    const { weekNumber } = await request.json();
     const weekKey = `S${weekNumber}`;
 
     const intervenant = await prisma.intervenant.findFirst({
@@ -18,28 +18,12 @@ export async function POST(
     }
 
     const currentAvailabilities = intervenant.availabilities as any;
-    const existingSlots = currentAvailabilities[weekKey] || [];
-
-    // Filtrer pour retirer le créneau spécifique
-    const updatedSlots = existingSlots.filter(
-      (slot: any) =>
-        !(
-          slot.days === timeSlot.days &&
-          slot.from === timeSlot.from &&
-          slot.to === timeSlot.to
-        )
-    );
+    const weekSlots = currentAvailabilities[weekKey] || [];
 
     const updatedAvailabilities = {
       ...currentAvailabilities,
+      default: weekSlots,
     };
-
-    // Si la liste des créneaux est vide après suppression, supprimer la clé de la semaine
-    if (updatedSlots.length === 0) {
-      delete updatedAvailabilities[weekKey];
-    } else {
-      updatedAvailabilities[weekKey] = updatedSlots;
-    }
 
     await prisma.intervenant.update({
       where: { key: params.key },

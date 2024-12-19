@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 function convertAvailabilityToEvents(
   availabilities: Availabilities,
@@ -33,6 +34,12 @@ function convertAvailabilityToEvents(
     endTime?: string;
     daysOfWeek?: number[];
     backgroundColor: string;
+    extendedProps: {
+      isSpecific: boolean;
+      days: string;
+      startTime: string;
+      endTime: string;
+    };
   }[] = [];
 
   const weekKey = `S${weekNumber}`;
@@ -49,8 +56,8 @@ function convertAvailabilityToEvents(
     return translations[day.toLowerCase().trim()];
   };
 
-  // Ajouter d'abord les événements par défaut
-  if (availabilities.default) {
+  // Ajouter les événements par défaut seulement s'il n'y a pas d'événements spécifiques pour la semaine
+  if (!weekSpecificEvents && availabilities.default) {
     availabilities.default.forEach((slot: TimeSlot) => {
       const days = slot.days.split(/[,\s]+/).filter(Boolean);
       days.forEach((day: string) => {
@@ -59,24 +66,25 @@ function convertAvailabilityToEvents(
           const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
             .indexOf(englishDay);
           
-          // N'ajouter l'événement par défaut que s'il n'y a pas d'événement spécifique pour ce jour
-          if (!weekSpecificEvents || !weekSpecificEvents.some(specificSlot => 
-            specificSlot.days.toLowerCase().includes(day.toLowerCase())
-          )) {
-            events.push({
-              title: "Disponible",
+          events.push({
+            title: "Disponible",
+            startTime: slot.from,
+            endTime: slot.to,
+            daysOfWeek: [dayIndex],
+            backgroundColor: "#10B981",
+            extendedProps: {
+              isSpecific: false,
+              days: day.trim(),
               startTime: slot.from,
-              endTime: slot.to,
-              daysOfWeek: [dayIndex],
-              backgroundColor: "#10B981",
-            });
-          }
+              endTime: slot.to
+            }
+          });
         }
       });
     });
   }
 
-  // Ajouter ensuite les événements spécifiques de la semaine
+  // Ajouter les événements spécifiques de la semaine
   if (weekSpecificEvents) {
     weekSpecificEvents.forEach((slot: TimeSlot) => {
       const days = slot.days.split(/[,\s]+/).filter(Boolean);
@@ -92,6 +100,12 @@ function convertAvailabilityToEvents(
             endTime: slot.to,
             daysOfWeek: [dayIndex],
             backgroundColor: "#10B981",
+            extendedProps: {
+              isSpecific: true,
+              days: day.trim(),
+              startTime: slot.from,
+              endTime: slot.to
+            }
           });
         }
       });
@@ -115,6 +129,7 @@ export function AvailabilityClient({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<any>(null);
   const [isEditable, setIsEditable] = useState(false);
+  const [isSetDefaultDialogOpen, setIsSetDefaultDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchAvailabilities() {
@@ -176,30 +191,35 @@ export function AvailabilityClient({
   };
 
   const handleEventClick = async (clickInfo: any) => {
-    setEventToDelete(clickInfo.event);
+    const isDefaultEvent = !clickInfo.event.extendedProps.isSpecific;
+    setEventToDelete({ ...clickInfo.event, isDefaultEvent });
     setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (!eventToDelete) return;
 
-    const dayName = new Date(eventToDelete.start).toLocaleDateString("fr-FR", { 
-      weekday: "long" 
-    });
-    
     try {
-      const response = await fetch(`/api/availability/${intervenantKey}/delete`, {
+      const endpoint = eventToDelete.isDefaultEvent ? 
+        `/api/availability/${intervenantKey}/delete-default` : 
+        `/api/availability/${intervenantKey}/delete`;
+
+      const timeSlot = {
+        days: eventToDelete._def.extendedProps.days,
+        from: eventToDelete._def.extendedProps.startTime,
+        to: eventToDelete._def.extendedProps.endTime,
+      };
+
+      console.log('TimeSlot to delete:', timeSlot);
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           weekNumber: currentWeek,
-          timeSlot: {
-            days: dayName,
-            from: eventToDelete.startStr.split('T')[1].slice(0, 5),
-            to: eventToDelete.endStr.split('T')[1].slice(0, 5),
-          },
+          timeSlot: timeSlot,
         }),
       });
 
@@ -289,6 +309,29 @@ export function AvailabilityClient({
     }
   };
 
+  const handleSetAsDefaultConfirm = async () => {
+    try {
+      const response = await fetch(`/api/availability/${intervenantKey}/set-default`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weekNumber: currentWeek,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de la définition des disponibilités par défaut");
+
+      const updatedData = await fetch(`/api/availability/${intervenantKey}`).then(r => r.json());
+      setAvailabilities(updatedData.availabilities);
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setIsSetDefaultDialogOpen(false);
+    }
+  };
+
   if (!availabilities) {
     return (
       <div className="container mx-auto py-8">
@@ -339,54 +382,64 @@ export function AvailabilityClient({
           />
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <FullCalendar
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            locale={frLocale}
-            slotMinTime="07:00:00"
-            slotMaxTime="20:00:00"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "",
-            }}
-            weekNumbers={true}
-            events={weekEvents}
-            allDaySlot={false}
-            height="auto"
-            selectable={true}
-            selectMirror={true}
-            selectMinDistance={1}
-            selectConstraint={{
-              startTime: "07:00:00",
-              endTime: "20:00:00",
-            }}
-            select={handleSelect}
-            datesSet={(dateInfo) => {
-              setWeekViewDate(dateInfo.start);
-              setCurrentWeek(getWeekNumber(dateInfo.start));
-            }}
-            initialDate={weekViewDate}
-            eventContent={(eventInfo) => ({
-              html: `
-                <div class="flex items-center justify-between p-1">
-                  <span>${eventInfo.timeText}</span>
-                  <button class="delete-event text-gray-500 hover:text-red-500 p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 6h18"></path>
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                    </svg>
-                  </button>
-                </div>
-              `,
-            })}
-            eventClick={handleEventClick}
-            editable={true}
-            eventDrop={handleEventDrop}
-            eventResize={handleEventResize}
-          />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Button 
+              onClick={() => setIsSetDefaultDialogOpen(true)}
+              className="mb-4"
+            >
+              Définir comme disponibilités par défaut
+            </Button>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <FullCalendar
+              plugins={[timeGridPlugin, interactionPlugin]}
+              initialView="timeGridWeek"
+              locale={frLocale}
+              slotMinTime="07:00:00"
+              slotMaxTime="20:00:00"
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "",
+              }}
+              weekNumbers={true}
+              events={weekEvents}
+              allDaySlot={false}
+              height="auto"
+              selectable={true}
+              selectMirror={true}
+              selectMinDistance={1}
+              selectConstraint={{
+                startTime: "07:00:00",
+                endTime: "20:00:00",
+              }}
+              select={handleSelect}
+              datesSet={(dateInfo) => {
+                setWeekViewDate(dateInfo.start);
+                setCurrentWeek(getWeekNumber(dateInfo.start));
+              }}
+              initialDate={weekViewDate}
+              eventContent={(eventInfo) => ({
+                html: `
+                  <div class="flex items-center justify-between p-1">
+                    <span>${eventInfo.timeText}</span>
+                    <button class="delete-event text-gray-500 hover:text-red-500 p-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                `,
+              })}
+              eventClick={handleEventClick}
+              editable={true}
+              eventDrop={handleEventDrop}
+              eventResize={handleEventResize}
+            />
+          </div>
         </div>
       </div>
 
@@ -406,6 +459,24 @@ export function AvailabilityClient({
               className="bg-destructive hover:bg-destructive/90"
             >
               Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isSetDefaultDialogOpen} onOpenChange={setIsSetDefaultDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la modification</AlertDialogTitle>
+            <AlertDialogDescription>
+              Voulez-vous définir les disponibilités de cette semaine comme disponibilités par défaut ?
+              Cela remplacera les disponibilités par défaut existantes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSetAsDefaultConfirm}>
+              Confirmer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
