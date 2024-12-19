@@ -14,6 +14,7 @@ export async function GET(
         firstName: true,
         lastName: true,
         availabilities: true,
+        lastModifiedDate: true,
       },
     });
 
@@ -45,11 +46,11 @@ export async function POST(
     }
 
     // Convertir les disponibilités existantes en objet
-    let currentAvailabilities = intervenant.availabilities as any || {};
-    
+    const currentAvailabilities = (intervenant.availabilities as any) || {};
+
     // Récupérer les créneaux existants pour cette semaine
     const existingSlots = currentAvailabilities[weekKey] || [];
-    
+
     // Mettre à jour les disponibilités
     const updatedAvailabilities = {
       ...currentAvailabilities,
