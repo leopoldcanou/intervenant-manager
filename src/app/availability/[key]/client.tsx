@@ -8,6 +8,7 @@ import frLocale from "@fullcalendar/core/locales/fr";
 import { useEffect, useState } from "react";
 import { Availabilities, TimeSlot } from "@/types/availability";
 import { getWeekNumber } from "@/lib/date";
+import interactionPlugin from "@fullcalendar/interaction";
 
 function convertAvailabilityToEvents(
   availabilities: Availabilities,
@@ -24,6 +25,7 @@ function convertAvailabilityToEvents(
   }[] = [];
 
   const weekKey = `S${weekNumber}`;
+  const weekSpecificEvents = weekNumber && availabilities[weekKey];
 
   const translateDayToEnglish = (day: string) => {
     const translations: { [key: string]: string } = {
@@ -36,41 +38,54 @@ function convertAvailabilityToEvents(
     return translations[day.toLowerCase().trim()];
   };
 
-  // Utiliser les disponibilités spécifiques de la semaine si elles existent
-  const weekAvailabilities =
-    weekNumber && availabilities[weekKey]
-      ? availabilities[weekKey]
-      : availabilities.default;
-
-  if (!weekAvailabilities) {
-    return events;
+  // Ajouter d'abord les événements par défaut
+  if (availabilities.default) {
+    availabilities.default.forEach((slot: TimeSlot) => {
+      const days = slot.days.split(/[,\s]+/).filter(Boolean);
+      days.forEach((day: string) => {
+        const englishDay = translateDayToEnglish(day.trim());
+        if (englishDay) {
+          const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+            .indexOf(englishDay);
+          
+          // N'ajouter l'événement par défaut que s'il n'y a pas d'événement spécifique pour ce jour
+          if (!weekSpecificEvents || !weekSpecificEvents.some(specificSlot => 
+            specificSlot.days.toLowerCase().includes(day.toLowerCase())
+          )) {
+            events.push({
+              title: "Disponible",
+              startTime: slot.from,
+              endTime: slot.to,
+              daysOfWeek: [dayIndex],
+              backgroundColor: "#10B981",
+            });
+          }
+        }
+      });
+    });
   }
 
-  weekAvailabilities.forEach((slot: TimeSlot) => {
-    const days = slot.days.split(/[,\s]+/).filter(Boolean); // Gère les espaces et les virgules
-    days.forEach((day: string) => {
-      const englishDay = translateDayToEnglish(day.trim());
-      if (englishDay) {
-        const dayIndex = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ].indexOf(englishDay);
-
-        events.push({
-          title: "Disponible",
-          startTime: slot.from,
-          endTime: slot.to,
-          daysOfWeek: [dayIndex],
-          backgroundColor: "#10B981",
-        });
-      }
+  // Ajouter ensuite les événements spécifiques de la semaine
+  if (weekSpecificEvents) {
+    weekSpecificEvents.forEach((slot: TimeSlot) => {
+      const days = slot.days.split(/[,\s]+/).filter(Boolean);
+      days.forEach((day: string) => {
+        const englishDay = translateDayToEnglish(day.trim());
+        if (englishDay) {
+          const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+            .indexOf(englishDay);
+          
+          events.push({
+            title: "Disponible",
+            startTime: slot.from,
+            endTime: slot.to,
+            daysOfWeek: [dayIndex],
+            backgroundColor: "#10B981",
+          });
+        }
+      });
     });
-  });
+  }
 
   return events;
 }
@@ -103,6 +118,48 @@ export function AvailabilityClient({
 
     fetchAvailabilities();
   }, [intervenantKey]);
+
+  const handleSelect = async (selectInfo: any) => {
+    const startTime = selectInfo.start.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const endTime = selectInfo.end.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const dayName = selectInfo.start.toLocaleDateString("fr-FR", {
+      weekday: "long",
+    });
+
+    try {
+      const response = await fetch(`/api/availability/${intervenantKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weekNumber: currentWeek,
+          timeSlot: {
+            days: dayName,
+            from: startTime,
+            to: endTime,
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de l'enregistrement");
+
+      // Rafraîchir les disponibilités
+      const updatedData = await fetch(
+        `/api/availability/${intervenantKey}`
+      ).then((r) => r.json());
+      setAvailabilities(updatedData.availabilities);
+    } catch (error) {
+      console.error("Erreur:", error);
+      alert("Erreur lors de l'enregistrement du créneau");
+    }
+  };
 
   if (!availabilities) {
     return (
@@ -155,7 +212,7 @@ export function AvailabilityClient({
 
       <div className="bg-white p-4 rounded-lg shadow">
         <FullCalendar
-          plugins={[timeGridPlugin]}
+          plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           locale={frLocale}
           slotMinTime="07:00:00"
@@ -169,6 +226,14 @@ export function AvailabilityClient({
           events={weekEvents}
           allDaySlot={false}
           height="auto"
+          selectable={true}
+          selectMirror={true}
+          selectMinDistance={1}
+          selectConstraint={{
+            startTime: "07:00:00",
+            endTime: "20:00:00",
+          }}
+          select={handleSelect}
           datesSet={(dateInfo) => {
             setWeekViewDate(dateInfo.start);
             setCurrentWeek(getWeekNumber(dateInfo.start));
