@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -130,6 +130,9 @@ export function AvailabilityClient({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<any>(null);
   const [isSetDefaultDialogOpen, setIsSetDefaultDialogOpen] = useState(false);
+
+  // Référence pour le calendrier hebdomadaire
+  const weekCalendarRef = useRef<any>(null);
 
   const updateData = async () => {
     try {
@@ -372,7 +375,7 @@ export function AvailabilityClient({
           <div className="grid grid-cols-[400px_1fr] gap-4">
             <div className="bg-white p-4 rounded-lg shadow">
               <FullCalendar
-                plugins={[dayGridPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 locale={frLocale}
                 headerToolbar={{
@@ -381,10 +384,10 @@ export function AvailabilityClient({
                   right: "",
                 }}
                 height="auto"
-                selectable={true}
-                select={(info) => {
-                  setWeekViewDate(info.start);
-                  setCurrentWeek(getWeekNumber(info.start));
+                dateClick={(info) => {
+                  weekCalendarRef.current?.getApi().gotoDate(info.date);
+                  setWeekViewDate(info.date);
+                  setCurrentWeek(getWeekNumber(info.date));
                 }}
                 events={monthEvents}
                 displayEventTime={false}
@@ -393,12 +396,11 @@ export function AvailabilityClient({
                   setMonthViewDate(dateInfo.start);
                 }}
                 dayCellClassNames={(arg) => {
-                  // Vérifie si le jour a des événements
                   const hasEvents = monthEvents.some((event) => {
                     const dayIndex = event.daysOfWeek?.[0];
                     return dayIndex === arg.date.getDay();
                   });
-                  return hasEvents ? "bg-yellow-100" : "";
+                  return `cursor-pointer ${hasEvents ? "bg-yellow-100" : ""}`;
                 }}
               />
             </div>
@@ -414,6 +416,7 @@ export function AvailabilityClient({
               </div>
               <div className="bg-white p-4 rounded-lg shadow">
                 <FullCalendar
+                  ref={weekCalendarRef}
                   plugins={[timeGridPlugin, interactionPlugin]}
                   initialView="timeGridWeek"
                   locale={frLocale}
