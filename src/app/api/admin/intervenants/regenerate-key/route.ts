@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+function generateKey(length: number = 6): string {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}
+
 export async function POST(request: Request) {
   try {
     const { id } = await request.json();
@@ -8,14 +17,14 @@ export async function POST(request: Request) {
     const updatedIntervenant = await prisma.intervenant.update({
       where: { id },
       data: {
-        key: Math.random().toString(36).substring(7),
+        key: generateKey(),
       },
     });
 
     return NextResponse.json(updatedIntervenant);
   } catch (error) {
     return NextResponse.json(
-      { error: "Erreur lors de la régénération de la clé" },
+      { error: "Erreur lors de la régénération de la clé" + error },
       { status: 500 }
     );
   }
@@ -23,17 +32,23 @@ export async function POST(request: Request) {
 
 export async function PUT() {
   try {
-    await prisma.intervenant.updateMany({
-      data: {
-        key: Math.random().toString(36).substring(7),
-      },
-    });
+    const intervenants = await prisma.intervenant.findMany();
 
-    return NextResponse.json({ message: "Clés régénérées avec succès" });
+    const updates = await Promise.all(
+      intervenants.map((intervenant) =>
+        prisma.intervenant.update({
+          where: { id: intervenant.id },
+          data: { key: generateKey() },
+        })
+      )
+    );
+
+    return NextResponse.json({ success: true, count: updates.length });
   } catch (error) {
+    console.error("Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la régénération des clés" },
       { status: 500 }
     );
   }
-} 
+}

@@ -9,7 +9,7 @@ export default function RegenerateAllKeysButton() {
 
   const handleRegenerateAll = async () => {
     try {
-      const response = await fetch("/api/intervenants/regenerate-key", {
+      const response = await fetch("/api/admin/intervenants/regenerate-key", {
         method: "PUT",
       });
 

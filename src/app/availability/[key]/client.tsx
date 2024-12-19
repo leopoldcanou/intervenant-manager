@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { Availabilities, TimeSlot } from "@/types/availability";
 import { getWeekNumber } from "@/lib/date";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,7 +127,6 @@ export function AvailabilityClient({
   const [weekViewDate, setWeekViewDate] = useState(new Date());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<any>(null);
-  const [isEditable, setIsEditable] = useState(false);
   const [isSetDefaultDialogOpen, setIsSetDefaultDialogOpen] = useState(false);
 
   useEffect(() => {

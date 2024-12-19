@@ -35,7 +35,7 @@ export type Intervenant = {
 };
 
 async function deleteIntervenant(id: string) {
-  const response = await fetch(`/api/intervenants/${id}`, {
+  const response = await fetch(`/api/admin/intervenants/${id}`, {
     method: "DELETE",
   });
 
@@ -47,7 +47,7 @@ async function deleteIntervenant(id: string) {
 }
 
 async function regenerateKey(id: string) {
-  const response = await fetch("/api/intervenants/regenerate-key", {
+  const response = await fetch("/api/admin/intervenants/regenerate-key", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id }),
