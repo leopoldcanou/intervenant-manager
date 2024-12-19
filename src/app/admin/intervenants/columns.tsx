@@ -2,7 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, Copy, Pencil, Calendar } from "lucide-react";
+import { X, RefreshCw, Copy, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EditIntervenantDialog } from "./edit-intervenant-dialog";
 import {
@@ -21,7 +21,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export type Intervenant = {
   id: string;
@@ -209,23 +208,6 @@ const ActionsCell = ({ row }: CellProps) => {
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
-
-const AvailabilityCell = ({ row }: CellProps) => {
-  const router = useRouter();
-  const intervenant = row.original;
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => router.push(`/admin/availability`)}
-      className="flex items-center gap-2"
-    >
-      <Calendar className="h-4 w-4" />
-      Gérer les disponibilités
-    </Button>
   );
 };
 

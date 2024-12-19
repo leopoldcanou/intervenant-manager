@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import frLocale from "@fullcalendar/core/locales/fr";
-import { useEffect, useState } from "react";
 import { Availabilities, TimeSlot } from "@/types/availability";
 import { getWeekNumber } from "@/lib/date";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -150,7 +149,7 @@ export function AvailabilityClient({
   // Référence pour le calendrier hebdomadaire
   const weekCalendarRef = useRef<any>(null);
 
-  const updateData = async () => {
+  const updateData = useCallback(async () => {
     try {
       const response = await fetch(`/api/availability/${intervenantKey}`);
       if (!response.ok) {
@@ -163,11 +162,11 @@ export function AvailabilityClient({
     } catch (error) {
       console.error("Erreur:", error);
     }
-  };
+  }, [intervenantKey]);
 
   useEffect(() => {
     updateData();
-  }, [intervenantKey]);
+  }, [updateData]);
 
   const handleSelect = async (selectInfo: any) => {
     const startTime = selectInfo.start.toLocaleTimeString("fr-FR", {

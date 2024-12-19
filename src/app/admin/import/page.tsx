@@ -80,7 +80,9 @@ export default function ImportPage() {
       <NavBar />
       <div className="container mx-auto py-8">
         <div className="flex flex-col items-center gap-8">
-          <h1 className="text-2xl font-bold">Import de quantités d'heures</h1>
+          <h1 className="text-2xl font-bold">
+            Import de quantités d&apos;heures
+          </h1>
 
           <div className="w-full max-w-md space-y-4">
             <div className="flex justify-center">

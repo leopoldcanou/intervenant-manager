@@ -1,50 +1,45 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const intervenant = await prisma.intervenant.delete({
-      where: {
-        id: params.id,
-      },
-    })
+    const { id } = await params;
 
-    return NextResponse.json(intervenant)
+    const intervenant = await prisma.intervenant.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(intervenant);
   } catch (error) {
     return NextResponse.json(
-      { error: "Erreur lors de la suppression" },
+      { error: `Erreur lors de la suppression: ${error}` },
       { status: 500 }
-    )
+    );
   }
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { firstName, lastName, email, endDate } = await request.json();
+    const { id } = await params;
+    const data = await request.json();
 
-    const updatedIntervenant = await prisma.intervenant.update({
-      where: {
-        id: params.id,
-      },
-      data: {
-        firstName,
-        lastName,
-        email,
-        endDate: new Date(endDate),
-      },
+    const intervenant = await prisma.intervenant.update({
+      where: { id },
+      data,
     });
 
-    return NextResponse.json(updatedIntervenant);
+    return NextResponse.json(intervenant);
   } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'intervenant:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la modification" },
+      { error: "Erreur lors de la mise à jour de l'intervenant" },
       { status: 500 }
     );
   }
-} 
+}

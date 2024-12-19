@@ -1,13 +1,20 @@
-import { signIn } from "@/auth";
+"use client";
+import { handleSignIn } from "@/app/_actions/auth";
+import { useTransition } from "react";
 
 export function SignIn() {
+  const [isPending, startTransition] = useTransition();
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => {
+      handleSignIn(formData);
+    });
+  };
+
   return (
-    <form
-      action={async (formData) => {
-        "use server";
-        await signIn("credentials", formData);
-      }}
-    >
+    <form onSubmit={onSubmit}>
       <label>
         Email
         <input name="email" type="email" />
@@ -16,7 +23,9 @@ export function SignIn() {
         Password
         <input name="password" type="password" />
       </label>
-      <button>Sign In</button>
+      <button disabled={isPending}>
+        {isPending ? "Loading..." : "Sign In"}
+      </button>
     </form>
   );
 }

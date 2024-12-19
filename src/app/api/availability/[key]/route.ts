@@ -1,14 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { key: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
+    const { key } = await params;
+
     const intervenant = await prisma.intervenant.findFirst({
       where: {
-        key: params.key,
+        key,
       },
       select: {
         firstName: true,
@@ -31,15 +33,16 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: { key: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
+    const { key } = await params;
     const { weekNumber, timeSlot } = await request.json();
     const weekKey = `S${weekNumber}`;
 
     const intervenant = await prisma.intervenant.findFirst({
-      where: { key: params.key },
+      where: { key },
     });
 
     if (!intervenant) {
@@ -59,7 +62,7 @@ export async function POST(
     };
 
     const updatedIntervenant = await prisma.intervenant.update({
-      where: { key: params.key },
+      where: { key },
       data: {
         availabilities: updatedAvailabilities, // Prisma gérera la conversion en JSON
         lastModifiedDate: new Date(),
@@ -80,14 +83,15 @@ export async function POST(
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { key: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
+    const { key } = await params;
     const { availabilities } = await request.json();
 
     const updatedIntervenant = await prisma.intervenant.update({
-      where: { key: params.key },
+      where: { key },
       data: {
         availabilities, // Prisma gérera la conversion en JSON
         lastModifiedDate: new Date(),
@@ -97,7 +101,7 @@ export async function PUT(
     return NextResponse.json(updatedIntervenant);
   } catch (error) {
     return NextResponse.json(
-      { error: "Erreur lors de la mise à jour des disponibilités" },
+      { error: "Erreur lors de la mise à jour des disponibilités" + error },
       { status: 500 }
     );
   }

@@ -24,10 +24,11 @@ async function getIntervenantByKey(key: string) {
 export default async function AvailabilityPage({
   params,
 }: {
-  params: { key: string };
+  params: Promise<{ key: string }>;
 }) {
   try {
-    const intervenant = await getIntervenantByKey(params.key);
+    const { key } = await params;
+    const intervenant = await getIntervenantByKey(key);
 
     if (!intervenant) {
       notFound();
@@ -38,7 +39,7 @@ export default async function AvailabilityPage({
         <h1 className="text-2xl font-bold mb-8">
           Bonjour {intervenant.firstName} {intervenant.lastName}
         </h1>
-        <AvailabilityClient intervenantKey={params.key} />
+        <AvailabilityClient intervenantKey={key} />
       </div>
     );
   } catch (error) {

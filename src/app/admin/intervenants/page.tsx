@@ -26,7 +26,7 @@ export default function IntervenantsPage() {
       } catch (error) {
         toast({
           variant: "destructive",
-          description: "Erreur lors du chargement des intervenants",
+          description: "Erreur lors du chargement des intervenants" + error,
         });
       }
     };
@@ -39,9 +39,9 @@ export default function IntervenantsPage() {
     try {
       const response = await fetch("/api/admin/export");
       if (!response.ok) throw new Error("Erreur lors de l'export");
-      
+
       const data = await response.json();
-      
+
       if (data.length === 0) {
         toast({
           variant: "destructive",
@@ -50,7 +50,9 @@ export default function IntervenantsPage() {
         return;
       }
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -66,7 +68,7 @@ export default function IntervenantsPage() {
     } catch (error) {
       toast({
         variant: "destructive",
-        description: "Erreur lors de l'export",
+        description: "Erreur lors de l'export" + error,
       });
     } finally {
       setIsExporting(false);

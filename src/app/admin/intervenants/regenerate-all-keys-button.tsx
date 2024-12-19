@@ -24,7 +24,7 @@ export default function RegenerateAllKeysButton() {
     } catch (error) {
       toast({
         variant: "destructive",
-        description: "Erreur lors de la régénération des clés",
+        description: "Erreur lors de la régénération des clés" + error,
       });
     }
   };
@@ -40,4 +40,4 @@ export default function RegenerateAllKeysButton() {
       Régénérer toutes les clés
     </Button>
   );
-} 
+}

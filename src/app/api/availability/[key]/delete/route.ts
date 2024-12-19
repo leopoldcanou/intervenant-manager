@@ -1,16 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { key: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
+    const { key } = await params;
     const { weekNumber, timeSlot } = await request.json();
     const weekKey = `S${weekNumber}`;
 
     const intervenant = await prisma.intervenant.findFirst({
-      where: { key: params.key },
+      where: { key },
     });
 
     if (!intervenant) {
@@ -42,7 +43,7 @@ export async function POST(
     }
 
     await prisma.intervenant.update({
-      where: { key: params.key },
+      where: { key },
       data: {
         availabilities: updatedAvailabilities,
       },
@@ -53,4 +54,4 @@ export async function POST(
     console.error("Erreur:", error);
     return new NextResponse("Erreur serveur", { status: 500 });
   }
-} 
+}
