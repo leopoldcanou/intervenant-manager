@@ -114,6 +114,7 @@ export function AvailabilityClient({
   const [weekViewDate, setWeekViewDate] = useState(new Date());
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<any>(null);
+  const [isEditable, setIsEditable] = useState(false);
 
   useEffect(() => {
     async function fetchAvailabilities() {
@@ -214,6 +215,80 @@ export function AvailabilityClient({
     }
   };
 
+  const handleEventDrop = async (dropInfo: any) => {
+    const event = dropInfo.event;
+    const dayName = new Date(event.start).toLocaleDateString("fr-FR", { 
+      weekday: "long" 
+    });
+
+    try {
+      const response = await fetch(`/api/availability/${intervenantKey}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weekNumber: currentWeek,
+          oldTimeSlot: {
+            days: dayName,
+            from: dropInfo.oldEvent.startStr.split('T')[1].slice(0, 5),
+            to: dropInfo.oldEvent.endStr.split('T')[1].slice(0, 5),
+          },
+          newTimeSlot: {
+            days: dayName,
+            from: event.startStr.split('T')[1].slice(0, 5),
+            to: event.endStr.split('T')[1].slice(0, 5),
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de la modification");
+
+      const updatedData = await fetch(`/api/availability/${intervenantKey}`).then(r => r.json());
+      setAvailabilities(updatedData.availabilities);
+    } catch (error) {
+      console.error("Erreur:", error);
+      dropInfo.revert();
+    }
+  };
+
+  const handleEventResize = async (resizeInfo: any) => {
+    const event = resizeInfo.event;
+    const dayName = new Date(event.start).toLocaleDateString("fr-FR", { 
+      weekday: "long" 
+    });
+
+    try {
+      const response = await fetch(`/api/availability/${intervenantKey}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          weekNumber: currentWeek,
+          oldTimeSlot: {
+            days: dayName,
+            from: resizeInfo.oldEvent.startStr.split('T')[1].slice(0, 5),
+            to: resizeInfo.oldEvent.endStr.split('T')[1].slice(0, 5),
+          },
+          newTimeSlot: {
+            days: dayName,
+            from: event.startStr.split('T')[1].slice(0, 5),
+            to: event.endStr.split('T')[1].slice(0, 5),
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de la modification");
+
+      const updatedData = await fetch(`/api/availability/${intervenantKey}`).then(r => r.json());
+      setAvailabilities(updatedData.availabilities);
+    } catch (error) {
+      console.error("Erreur:", error);
+      resizeInfo.revert();
+    }
+  };
+
   if (!availabilities) {
     return (
       <div className="container mx-auto py-8">
@@ -308,6 +383,9 @@ export function AvailabilityClient({
               `,
             })}
             eventClick={handleEventClick}
+            editable={true}
+            eventDrop={handleEventDrop}
+            eventResize={handleEventResize}
           />
         </div>
       </div>

@@ -71,3 +71,53 @@ export async function POST(
     return new NextResponse("Erreur serveur", { status: 500 });
   }
 }
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { key: string } }
+) {
+  try {
+    const { weekNumber, oldTimeSlot, newTimeSlot } = await request.json();
+    const weekKey = `S${weekNumber}`;
+
+    const intervenant = await prisma.intervenant.findFirst({
+      where: { key: params.key },
+    });
+
+    if (!intervenant) {
+      return new NextResponse("Intervenant non trouvé", { status: 404 });
+    }
+
+    const currentAvailabilities = intervenant.availabilities as any;
+    const existingSlots = currentAvailabilities[weekKey] || [];
+
+    // Remplacer l'ancien créneau par le nouveau
+    const updatedSlots = existingSlots.map((slot: any) => {
+      if (
+        slot.days === oldTimeSlot.days &&
+        slot.from === oldTimeSlot.from &&
+        slot.to === oldTimeSlot.to
+      ) {
+        return newTimeSlot;
+      }
+      return slot;
+    });
+
+    const updatedAvailabilities = {
+      ...currentAvailabilities,
+      [weekKey]: updatedSlots,
+    };
+
+    await prisma.intervenant.update({
+      where: { key: params.key },
+      data: {
+        availabilities: updatedAvailabilities,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Erreur:", error);
+    return new NextResponse("Erreur serveur", { status: 500 });
+  }
+}
