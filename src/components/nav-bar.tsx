@@ -9,14 +9,14 @@ export default function NavBar() {
         <div className="flex justify-between items-center h-16">
           <div className="flex space-x-4">
             <UserInfo />
-            <Link 
-              href="/admin/intervenants" 
+            <Link
+              href="/admin/intervenants"
               className="text-foreground hover:text-foreground/80"
             >
               Intervenants
             </Link>
-            <Link 
-              href="/admin/availability" 
+            <Link
+              href="/admin/availability"
               className="text-foreground hover:text-foreground/80"
             >
               Disponibilités

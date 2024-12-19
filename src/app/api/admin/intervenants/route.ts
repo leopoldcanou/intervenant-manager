@@ -26,18 +26,19 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const intervenants = await prisma.intervenant.findMany({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        key: true,
-      },
       orderBy: {
         lastName: 'asc',
       },
     });
 
-    return NextResponse.json(intervenants);
+    // Formater les dates avant de les envoyer au client
+    const formattedIntervenants = intervenants.map(intervenant => ({
+      ...intervenant,
+      creationDate: intervenant.creationDate?.toISOString() || new Date().toISOString(),
+      endDate: intervenant.endDate?.toISOString() || new Date().toISOString(),
+    }));
+
+    return NextResponse.json(formattedIntervenants);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

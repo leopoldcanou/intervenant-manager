@@ -44,27 +44,31 @@ export async function POST(
       return new NextResponse("Intervenant non trouvé", { status: 404 });
     }
 
-    const currentAvailabilities = intervenant.availabilities as any;
+    let currentAvailabilities = {};
+    try {
+      currentAvailabilities = JSON.parse(intervenant.availabilities as string || '{}');
+    } catch (error) {
+      console.error("Erreur parsing availabilities:", error);
+      currentAvailabilities = {};
+    }
     
     // Récupérer les créneaux existants pour cette semaine
     const existingSlots = currentAvailabilities[weekKey] || [];
     
-    // Ne pas filtrer les créneaux du même jour, simplement ajouter le nouveau
+    // Mettre à jour les disponibilités
     const updatedAvailabilities = {
       ...currentAvailabilities,
-      [weekKey]: [
-        ...existingSlots,
-        timeSlot,
-      ],
+      [weekKey]: [...existingSlots, timeSlot],
     };
 
-    await prisma.intervenant.update({
+    const updatedIntervenant = await prisma.intervenant.update({
       where: { key: params.key },
       data: {
-        availabilities: updatedAvailabilities,
+        availabilities: JSON.stringify(updatedAvailabilities),
       },
     });
 
+    console.log("Disponibilités mises à jour:", updatedIntervenant.availabilities);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur:", error);
@@ -77,47 +81,27 @@ export async function PUT(
   { params }: { params: { key: string } }
 ) {
   try {
-    const { weekNumber, oldTimeSlot, newTimeSlot } = await request.json();
-    const weekKey = `S${weekNumber}`;
-
-    const intervenant = await prisma.intervenant.findFirst({
-      where: { key: params.key },
+    const { availabilities } = await request.json();
+    console.log("Sauvegarde des disponibilités:", {
+      key: params.key,
+      availabilities: JSON.stringify(availabilities, null, 2)
     });
 
-    if (!intervenant) {
-      return new NextResponse("Intervenant non trouvé", { status: 404 });
-    }
-
-    const currentAvailabilities = intervenant.availabilities as any;
-    const existingSlots = currentAvailabilities[weekKey] || [];
-
-    // Remplacer l'ancien créneau par le nouveau
-    const updatedSlots = existingSlots.map((slot: any) => {
-      if (
-        slot.days === oldTimeSlot.days &&
-        slot.from === oldTimeSlot.from &&
-        slot.to === oldTimeSlot.to
-      ) {
-        return newTimeSlot;
-      }
-      return slot;
-    });
-
-    const updatedAvailabilities = {
-      ...currentAvailabilities,
-      [weekKey]: updatedSlots,
-    };
-
-    await prisma.intervenant.update({
+    const updatedIntervenant = await prisma.intervenant.update({
       where: { key: params.key },
       data: {
-        availabilities: updatedAvailabilities,
+        availabilities: JSON.stringify(availabilities),
       },
     });
 
-    return NextResponse.json({ success: true });
+    console.log("Intervenant mis à jour:", updatedIntervenant);
+
+    return NextResponse.json(updatedIntervenant);
   } catch (error) {
-    console.error("Erreur:", error);
-    return new NextResponse("Erreur serveur", { status: 500 });
+    console.error("Erreur lors de la mise à jour:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour des disponibilités" },
+      { status: 500 }
+    );
   }
 }

@@ -41,7 +41,24 @@ export function EditIntervenantDialog({
   const [firstName, setFirstName] = useState(intervenant.firstName);
   const [lastName, setLastName] = useState(intervenant.lastName);
   const [email, setEmail] = useState(intervenant.email);
-  const [endDate, setEndDate] = useState<Date>(new Date(intervenant.endDate));
+  const [endDate, setEndDate] = useState<Date>(() => {
+    if (!intervenant.endDate) {
+      return new Date();
+    }
+    
+    try {
+      const date = new Date(intervenant.endDate);
+      // Vérifier si la date est valide
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", intervenant.endDate);
+        return new Date();
+      }
+      return date;
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return new Date();
+    }
+  });
   const { toast } = useToast();
 
   useEffect(() => {
