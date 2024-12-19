@@ -104,21 +104,6 @@ export default function ImportPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            <div className="bg-muted p-4 rounded-lg">
-              <h2 className="font-semibold mb-2">Format attendu :</h2>
-              <pre className="text-sm overflow-x-auto">
-                {JSON.stringify([
-                  {
-                    intervenant: "intervenant.A@unilim.fr",
-                    workweek: [
-                      { week: 37, hours: 4 },
-                      { week: 38, hours: 8 },
-                    ],
-                  },
-                ], null, 2)}
-              </pre>
-            </div>
           </div>
         </div>
       </div>
