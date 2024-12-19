@@ -21,4 +21,28 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  try {
+    const intervenants = await prisma.intervenant.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        key: true,
+      },
+      orderBy: {
+        lastName: 'asc',
+      },
+    });
+
+    return NextResponse.json(intervenants);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Erreur lors de la récupération des intervenants" },
+      { status: 500 }
+    );
+  }
 } 
