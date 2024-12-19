@@ -21,6 +21,12 @@ export default function NavBar() {
             >
               Disponibilités
             </Link>
+            <Link
+              href="/admin/import"
+              className="text-foreground hover:text-foreground/80"
+            >
+              Import
+            </Link>
           </div>
           <LogoutButton />
         </div>
