@@ -72,4 +72,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
+  trustHost: true, // Ajout de trustHost pour contourner l'erreur d'hôte non fiable
 });
